@@ -39,7 +39,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* SetDestinationTouchAction;
 
-        /** Keybind Zoom In Action */
+    /** Camera Actions */
+    /** Mouse Move Camera Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* SetCameraMoveClickAction;
+    /** Gesture Move Camera Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* SetCameraMoveTouchAction;
+
+    /** Keybind Zoom In Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* SetZoomInBindingAction;
 	/** Spread Zoom In Action */
@@ -52,6 +60,7 @@ public:
 	/** Pinch Zoom Out Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* SetZoomOutGestureAction;
+    
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
@@ -69,30 +78,34 @@ protected:
 	void OnTouchTriggered();
 	void OnTouchReleased();
 
-    /** Input handlers for SetZoomIn action. */
+    /** Section: Camera **/
 	void OnSetZoomInTriggered();
-	// void OnSetZoomInReleased();
 	// void OnGestureZoomInTriggered();
-	// void OnGestureZoomInReleased();
 
-    /** Input handlers for SetZoomOut action. */
 	void OnSetZoomOutTriggered();
-	// void OnSetZoomOutReleased();
 	// void OnGestureZoomOutTriggered();
-	// void OnGestureZoomOutReleased();
+
+    void OnCameraMoveStarted();
+    void OnCameraMoveTriggered();
+    void OnCameraMoveReleased();
+    void OnGestureCameraMoveStarted();
+    void OnGestureCameraMoveReleased();
 
 private:
 	FVector CachedDestination;
+    FVector2f CachedScreenInputPos;
 
 	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
 
+    // TODO NSM - Expose below values to BP
     // Limits
-    float fMinZoom = 800.f;  // TODO NSM - Expose to BP
-    float fMaxZoom = 3000.f; // TODO NSM - Expose to BP
+    float CamMinZoom = 800.f;  
+    float CamMaxZoom = 3000.f;
 
     // Amounts
-    float fZoomStep = 100.f; // TODO NSM - Expose to BP
+    float CamZoomStep = 100.f;
+    FVector2f CamMoveMag { 3.0f, 3.0f };
 };
 
 

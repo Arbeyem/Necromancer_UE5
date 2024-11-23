@@ -53,23 +53,25 @@ void ANecromancerPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnTouchReleased);
 		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnTouchReleased);
 
-        // Zoom In input events
-        EnhancedInputComponent->BindAction(SetZoomInBindingAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnSetZoomInTriggered);
-		// EnhancedInputComponent->BindAction(SetZoomInBindingAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnSetZoomInReleased);
-		// EnhancedInputComponent->BindAction(SetZoomInBindingAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnSetZoomInReleased);
-        // // Zoom In gesture events
-        // EnhancedInputComponent->BindAction(SetZoomInGestureAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnGestureZoomInTriggered);
-		// EnhancedInputComponent->BindAction(SetZoomInGestureAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnGestureZoomInReleased);
-		// EnhancedInputComponent->BindAction(SetZoomInGestureAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnGestureZoomInReleased);
+        // Camera Events
+        // Camera Move
+        EnhancedInputComponent->BindAction(SetCameraMoveClickAction, ETriggerEvent::Started, this, &ANecromancerPlayerController::OnCameraMoveStarted);
+        EnhancedInputComponent->BindAction(SetCameraMoveClickAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnCameraMoveTriggered);
+        EnhancedInputComponent->BindAction(SetCameraMoveClickAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnCameraMoveReleased);
+		EnhancedInputComponent->BindAction(SetCameraMoveClickAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnCameraMoveReleased);
+        // Camera Move Touch
+		EnhancedInputComponent->BindAction(SetCameraMoveTouchAction, ETriggerEvent::Started, this, &ANecromancerPlayerController::OnGestureCameraMoveStarted);
+		EnhancedInputComponent->BindAction(SetCameraMoveTouchAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnCameraMoveTriggered);
+		EnhancedInputComponent->BindAction(SetCameraMoveTouchAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnGestureCameraMoveReleased);
+		EnhancedInputComponent->BindAction(SetCameraMoveTouchAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnGestureCameraMoveReleased);
 
-        // Zoom Out input events
+        // Zoom In
+        EnhancedInputComponent->BindAction(SetZoomInBindingAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnSetZoomInTriggered);
+        // EnhancedInputComponent->BindAction(SetZoomInGestureAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnGestureZoomInTriggered);
+
+        // Zoom Out
         EnhancedInputComponent->BindAction(SetZoomOutBindingAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnSetZoomOutTriggered);
-		// EnhancedInputComponent->BindAction(SetZoomOutBindingAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnSetZoomOutReleased);
-		// EnhancedInputComponent->BindAction(SetZoomOutBindingAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnSetZoomOutReleased);
-        // // Zoom Out gesture events
         // EnhancedInputComponent->BindAction(SetZoomOutGestureAction, ETriggerEvent::Triggered, this, &ANecromancerPlayerController::OnGestureZoomOutTriggered);
-		// EnhancedInputComponent->BindAction(SetZoomOutGestureAction, ETriggerEvent::Completed, this, &ANecromancerPlayerController::OnGestureZoomOutReleased);
-		// EnhancedInputComponent->BindAction(SetZoomOutGestureAction, ETriggerEvent::Canceled, this, &ANecromancerPlayerController::OnGestureZoomOutReleased);
 	}
 	else
 	{
@@ -148,13 +150,13 @@ void ANecromancerPlayerController::OnSetZoomInTriggered()
     USpringArmComponent* CameraBoom = GetPawn()->FindComponentByClass<USpringArmComponent>();
     if (CameraBoom)
     {
-        if (CameraBoom->TargetArmLength > fMinZoom)
+        if (CameraBoom->TargetArmLength > CamMinZoom)
         {
-            CameraBoom->TargetArmLength -= fZoomStep;
+            CameraBoom->TargetArmLength -= CamZoomStep;
         }
-        if (CameraBoom->TargetArmLength < fMinZoom)
+        if (CameraBoom->TargetArmLength < CamMinZoom)
         {
-            CameraBoom->TargetArmLength = fMinZoom;
+            CameraBoom->TargetArmLength = CamMinZoom;
         }
     }
 }
@@ -166,13 +168,83 @@ void ANecromancerPlayerController::OnSetZoomOutTriggered()
     USpringArmComponent* CameraBoom = GetPawn()->FindComponentByClass<USpringArmComponent>();
     if (CameraBoom)
     {
-        if (CameraBoom->TargetArmLength < fMaxZoom)
+        if (CameraBoom->TargetArmLength < CamMaxZoom)
         {
-            CameraBoom->TargetArmLength += fZoomStep;
+            CameraBoom->TargetArmLength += CamZoomStep;
         }
-        if (CameraBoom->TargetArmLength > fMaxZoom)
+        if (CameraBoom->TargetArmLength > CamMaxZoom)
         {
-            CameraBoom->TargetArmLength = fMaxZoom;
+            CameraBoom->TargetArmLength = CamMaxZoom;
         }
     }
+}
+
+void ANecromancerPlayerController::OnCameraMoveStarted()
+{
+    UE_LOG(LogTemplateCharacter, Verbose, TEXT("'%s' Camera Move started."), *GetNameSafe(this));
+
+    FVector2f coords;
+	bool bGetSuccessful = false;
+	if (bIsTouch)
+	{
+		GetInputTouchState(ETouchIndex::Touch1, coords.X, coords.Y, bGetSuccessful);
+	}
+	else
+	{
+		bGetSuccessful = GetMousePosition(coords.X, coords.Y);
+	}
+
+	if (bGetSuccessful)
+	{
+		CachedScreenInputPos = coords;
+	}
+}
+
+void ANecromancerPlayerController::OnCameraMoveTriggered()
+{
+    FVector2f deltaPos { 0, 0 };
+	if (bIsTouch)
+	{
+        bool bGetSuccessful = false;
+        FVector2f inputPos;
+		GetInputTouchState(ETouchIndex::Touch1, inputPos.X, inputPos.Y, bGetSuccessful);
+        if (bGetSuccessful)
+        {
+            deltaPos = inputPos - CachedScreenInputPos;
+            CachedScreenInputPos = inputPos;
+        }
+	}
+	else
+	{
+		GetInputMouseDelta(deltaPos.X, deltaPos.Y);
+	}
+
+    USpringArmComponent* CameraBoom = GetPawn()->FindComponentByClass<USpringArmComponent>();
+    if (CameraBoom)
+    {
+        FRotator rotation;
+        rotation.Add(deltaPos.Y * CamMoveMag.Y, deltaPos.X * CamMoveMag.X, 0.f);
+
+        // FRotator DeltaRotation, bool bSweep, FHitResult* OutSweepHitResult, ETeleportType Teleport
+        CameraBoom->AddRelativeRotation(rotation, false);
+    }
+}
+
+void ANecromancerPlayerController::OnCameraMoveReleased()
+{
+    UE_LOG(LogTemplateCharacter, Verbose, TEXT("'%s' Camera Move ended."), *GetNameSafe(this));
+
+    CachedScreenInputPos.X = CachedScreenInputPos.Y = -1.f;
+}
+
+void ANecromancerPlayerController::OnGestureCameraMoveStarted()
+{
+    bIsTouch = true;
+    OnCameraMoveStarted();
+}
+
+void ANecromancerPlayerController::OnGestureCameraMoveReleased()
+{
+	bIsTouch = false;
+	OnCameraMoveReleased();
 }
