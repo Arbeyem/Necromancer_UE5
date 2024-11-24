@@ -60,6 +60,16 @@ public:
 	/** Pinch Zoom Out Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* SetZoomOutGestureAction;
+
+    // Limits
+    float CamMinZoom = 800.f;  
+    float CamMaxZoom = 3000.f;
+    float CamPitchMin = -70.f;
+    float CamPitchMax = -20.f;
+
+    // Amounts
+    float CamZoomStep = 100.f;
+    FVector2f CamMoveMag { 3.0f, 3.0f };
     
 
 protected:
@@ -97,15 +107,6 @@ private:
 
 	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
-
-    // TODO NSM - Expose below values to BP
-    // Limits
-    float CamMinZoom = 800.f;  
-    float CamMaxZoom = 3000.f;
-
-    // Amounts
-    float CamZoomStep = 100.f;
-    FVector2f CamMoveMag { 3.0f, 3.0f };
 };
 
 

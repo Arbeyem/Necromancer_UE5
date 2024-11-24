@@ -202,6 +202,8 @@ void ANecromancerPlayerController::OnCameraMoveStarted()
 
 void ANecromancerPlayerController::OnCameraMoveTriggered()
 {
+    UE_LOG(LogTemplateCharacter, Verbose, TEXT("'%s' Camera Move Triggered."), *GetNameSafe(this));
+    
     FVector2f deltaPos { 0, 0 };
 	if (bIsTouch)
 	{
@@ -222,11 +224,22 @@ void ANecromancerPlayerController::OnCameraMoveTriggered()
     USpringArmComponent* CameraBoom = GetPawn()->FindComponentByClass<USpringArmComponent>();
     if (CameraBoom)
     {
-        FRotator rotation;
-        rotation.Add(deltaPos.Y * CamMoveMag.Y, deltaPos.X * CamMoveMag.X, 0.f);
+        FRotator cameraBoomRotation, inputRotation;
+        cameraBoomRotation = CameraBoom->GetRelativeRotation();
+        inputRotation.Add(deltaPos.Y * CamMoveMag.Y, deltaPos.X * CamMoveMag.X, 0.f);
 
+        double desiredPitch = inputRotation.Pitch + cameraBoomRotation.Pitch;
+        if (desiredPitch < CamPitchMin)
+        {
+            inputRotation.Pitch = CamPitchMin - cameraBoomRotation.Pitch;
+        }
+        else if (desiredPitch > CamPitchMax)
+        {
+            inputRotation.Pitch = CamPitchMax - cameraBoomRotation.Pitch;
+        }
+        
         // FRotator DeltaRotation, bool bSweep, FHitResult* OutSweepHitResult, ETeleportType Teleport
-        CameraBoom->AddRelativeRotation(rotation, false);
+        CameraBoom->AddRelativeRotation(inputRotation, false);
     }
 }
 
