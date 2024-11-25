@@ -203,7 +203,7 @@ void ANecromancerPlayerController::OnCameraMoveStarted()
 void ANecromancerPlayerController::OnCameraMoveTriggered()
 {
     UE_LOG(LogTemplateCharacter, Verbose, TEXT("'%s' Camera Move Triggered."), *GetNameSafe(this));
-    
+
     FVector2f deltaPos { 0, 0 };
 	if (bIsTouch)
 	{
@@ -221,25 +221,27 @@ void ANecromancerPlayerController::OnCameraMoveTriggered()
 		GetInputMouseDelta(deltaPos.X, deltaPos.Y);
 	}
 
-    USpringArmComponent* CameraBoom = GetPawn()->FindComponentByClass<USpringArmComponent>();
-    if (CameraBoom)
+    if (deltaPos.X || deltaPos.Y)
     {
-        FRotator cameraBoomRotation, inputRotation;
-        cameraBoomRotation = CameraBoom->GetRelativeRotation();
-        inputRotation.Add(deltaPos.Y * CamMoveMag.Y, deltaPos.X * CamMoveMag.X, 0.f);
+        USpringArmComponent* CameraBoom = GetPawn()->FindComponentByClass<USpringArmComponent>();
+        if (CameraBoom)
+        {
+            FRotator cameraBoomRotation;
+            cameraBoomRotation = CameraBoom->GetRelativeRotation();
+            cameraBoomRotation.Add(deltaPos.Y * CamMoveMag.Y, deltaPos.X * CamMoveMag.X, 0.f);
 
-        double desiredPitch = inputRotation.Pitch + cameraBoomRotation.Pitch;
-        if (desiredPitch < CamPitchMin)
-        {
-            inputRotation.Pitch = CamPitchMin - cameraBoomRotation.Pitch;
+            if (cameraBoomRotation.Pitch < CamPitchMin)
+            {
+                cameraBoomRotation.Pitch = CamPitchMin;
+            }
+            else if (cameraBoomRotation.Pitch > CamPitchMax)
+            {
+                cameraBoomRotation.Pitch = CamPitchMax;
+            }
+            
+            // FRotator DeltaRotation, bool bSweep, FHitResult* OutSweepHitResult, ETeleportType Teleport
+            CameraBoom->SetRelativeRotation(cameraBoomRotation, true);
         }
-        else if (desiredPitch > CamPitchMax)
-        {
-            inputRotation.Pitch = CamPitchMax - cameraBoomRotation.Pitch;
-        }
-        
-        // FRotator DeltaRotation, bool bSweep, FHitResult* OutSweepHitResult, ETeleportType Teleport
-        CameraBoom->AddRelativeRotation(inputRotation, false);
     }
 }
 
